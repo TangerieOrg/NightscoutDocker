@@ -1,0 +1,40 @@
+version: '3.2'
+
+services:
+
+  app:
+    image: nightscout/cgm-remote-monitor
+    networks:
+      - internal
+      - nginx-proxy-overlay
+    env_file: ./.env
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      labels:
+        xyz.tangerie.reverse_proxy.path: "/"
+        xyz.tangerie.reverse_proxy.port: "1337"
+        xyz.tangerie.reverse_proxy.server_name: "nightscout.tangerie.xyz"
+    # depends_on:
+    #   - db
+
+  db:
+    image: mongo:latest
+    networks:
+      - internal
+    volumes:
+      - internal_db:/data/db
+
+volumes:
+  internal_db:
+
+networks:
+  nginx-proxy-overlay:
+    external: true
+    driver: overlay
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.4.0/24
